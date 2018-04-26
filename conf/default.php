@@ -9,3 +9,4 @@ $conf['dsn'] = '';
 $conf['user'] = '';
 $conf['pass'] = '';
 $conf['tableprefix'] = 'joomla_';
+$conf['cookiename'] = '';
