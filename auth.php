@@ -87,11 +87,30 @@ class auth_plugin_authjoomla extends auth_plugin_authpdo
         /** @noinspection SqlNoDataSourceInspection */
         /** @noinspection SqlResolve */
         $this->conf['select-user-groups'] = '
-            SELECT g.`title` AS `group`
+            SELECT
+              p.id AS `gid`,
+              (
+                SELECT GROUP_CONCAT(xp.`title` ORDER BY xp.`lft` SEPARATOR \'/\')
+                  FROM `' . $prefix . 'usergroups` AS xp
+                WHERE p.`lft` BETWEEN xp.`lft` AND xp.`rgt`
+              ) AS `group`
               FROM `' . $prefix . 'user_usergroup_map` AS m,
-                   `' . $prefix . 'usergroups` AS g
-             WHERE m.`group_id` = g.`id`
-               AND m.`user_id` = :uid
+                   `' . $prefix . 'usergroups` AS g,
+                   `' . $prefix . 'usergroups` AS p
+             WHERE m.`user_id`  = :uid
+               AND g.`id` = m.`group_id`
+               AND p.`lft` <= g.`lft`
+               AND p.`rgt` >= g.`rgt`
+        ';
+
+        /** @noinspection SqlNoDataSourceInspection */
+        /** @noinspection SqlResolve */
+        $this->conf['select-groups'] = '
+            SELECT n.id AS `gid`, GROUP_CONCAT(p.`title` ORDER BY p.lft SEPARATOR \'/\') as `group`
+              FROM `' . $prefix . 'usergroups` AS n, `' . $prefix . 'usergroups` AS p
+             WHERE n.lft BETWEEN p.lft AND p.rgt
+          GROUP BY n.id
+          ORDER BY n.id
         ';
 
         #FIXME we probably want to limit the time here
