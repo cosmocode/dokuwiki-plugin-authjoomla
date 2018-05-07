@@ -8,6 +8,7 @@
 
 /**
  * Class auth_plugin_authjoomla
+ *
  */
 class auth_plugin_authjoomla extends auth_plugin_authpdo
 {
@@ -116,7 +117,6 @@ class auth_plugin_authjoomla extends auth_plugin_authpdo
           ORDER BY n.id
         ';
 
-        #FIXME we probably want to limit the time here
         /** @noinspection SqlNoDataSourceInspection */
         /** @noinspection SqlResolve */
         $this->conf['select-session'] = '
@@ -129,6 +129,38 @@ class auth_plugin_authjoomla extends auth_plugin_authpdo
                AND `activation` = 0
         ';
     }
+
+    /**
+     * Sets up the language strings
+     *
+     * Needed to inherit from the parent class. It's abit ugly but currently no better way exists.
+     */
+    public function setupLocale()
+    {
+        if ($this->localised) return;
+        global $conf;
+
+        // load authpdo language files
+        /** @var array $lang is loaded by include */
+        $path = DOKU_PLUGIN . 'authpdo/lang/';
+        @include($path . 'en/lang.php');
+        if ($conf['lang'] != 'en') @include($path . $conf['lang'] . '/lang.php');
+        $pdolang = $lang;
+
+        // load our authloomla language files and config overrides
+        parent::setupLocale();
+
+        // merge them both
+        $this->lang = array_merge($this->lang, $pdolang);
+    }
+
+    /** @inheritdoc */
+    public function isCaseSensitive()
+    {
+        return false;
+    }
+
+
 }
 
 // vim:ts=4:sw=4:et:
