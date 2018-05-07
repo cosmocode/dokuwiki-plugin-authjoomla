@@ -1,7 +1,7 @@
 base   authjoomla
 author Andreas Gohr
 email  dokuwiki@cosmocode.de
-date   2018-04-25
+date   2018-05-07
 name   authjoomla plugin
 desc   Authenticate against a Joomla Database
 url    https://www.dokuwiki.org/plugin:authjoomla
