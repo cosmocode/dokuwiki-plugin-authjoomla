@@ -30,7 +30,31 @@ class auth_plugin_authjoomla extends auth_plugin_authpdo
             !empty($this->getConf('cookiename'))
         ) return true;
 
+        // support check of login data
+        if ($pass == "sso_only" &&
+            $user == $this->ssoCookieUser()
+        ) return true;
+
         return parent::checkPass($user, $pass);
+    }
+
+    /**
+     * Get user set by Joomla Cookie
+     */
+    protected function ssoCookieUser()
+    {
+        if (empty($_COOKIE['joomla_user_state'])) return;
+        if ($_COOKIE['joomla_user_state'] !== 'logged_in') return;
+        if (empty($this->getConf('cookiename'))) return false;
+        if (empty($_COOKIE[$this->getConf('cookiename')])) return false;
+
+        // check session in Joomla DB
+        $session = $_COOKIE[$this->getConf('cookiename')];
+        $sql = $this->getConf('select-session');
+        $result = $this->_query($sql, ['session' => $session]);
+        if ($result === false) return false;
+
+        return $result[0]['user'];
     }
 
     /**
@@ -41,19 +65,13 @@ class auth_plugin_authjoomla extends auth_plugin_authpdo
         global $INPUT;
 
         if (!empty($_COOKIE[DOKU_COOKIE])) return; // DokuWiki auth cookie found
-        if (empty($_COOKIE['joomla_user_state'])) return;
-        if ($_COOKIE['joomla_user_state'] !== 'logged_in') return;
-        if (empty($this->getConf('cookiename'))) return;
-        if (empty($_COOKIE[$this->getConf('cookiename')])) return;
 
-        // check session in Joomla DB
-        $session = $_COOKIE[$this->getConf('cookiename')];
-        $sql = $this->getConf('select-session');
-        $result = $this->_query($sql, ['session' => $session]);
-        if ($result === false) return;
+        $user = $this->ssoCookieUser();
 
+        if ($user == false) return;
+ 
         // force login
-        $_SERVER['REMOTE_USER'] = $result[0]['user'];
+        $_SERVER['REMOTE_USER'] = $user;
         $INPUT->set('u', $_SERVER['REMOTE_USER']);
         $INPUT->set('p', 'sso_only');
     }
